@@ -1,0 +1,19 @@
+# 忽略 data 文件夹内的所有内容，但保留文件夹本身
+data/*
+!data/.gitkeep
+
+# 忽略 static/videos 文件夹内的所有内容，但保留文件夹本身
+static/videos/*
+!static/videos/.gitkeep
+
+# 其他常见的忽略文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.DS_Store
+*.log
+
+video_download_status.csv

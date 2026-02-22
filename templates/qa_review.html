@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA检查工具 - Spatial Predict Benchmark</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .qa-review-container {
+            display: flex;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+        
+        .qa-left-panel {
+            width: 20%;
+            background: white;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+        }
+        
+        .qa-center-panel {
+            width: 40%;
+            background: white;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+        }
+        
+        .qa-right-panel {
+            width: 40%;
+            background: white;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+        
+        .video-directory-info {
+            padding: 15px;
+            background: #e9ecef;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .video-name-display {
+            color: #333;
+        }
+        
+        .video-name-display.video-not-exists {
+            color: #dc3545;
+            font-style: italic;
+        }
+        
+        .json-file-selector {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .json-file-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .json-file-input input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .json-file-input button {
+            padding: 8px 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .json-file-input button:hover {
+            background: #218838;
+        }
+        
+        .json-file-info {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .qa-cut-point-section {
+            margin: 8px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .qa-cut-point-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .qa-cut-point-display label {
+            font-weight: bold;
+            color: #495057;
+            margin: 0;
+        }
+        
+        .cut-point-input {
+            width: 80px;
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .qa-view-section {
+            margin: 8px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .qa-view-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .qa-view-display label {
+            font-weight: bold;
+            color: #495057;
+            margin: 0;
+        }
+        
+        .viewpoint-input {
+            flex: 1;
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .segment-status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .segment-status-badge.pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .segment-status-badge.selected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .segment-status-badge.unavailable {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .segment-status-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px 0;
+        }
+        
+        .segment-status-section label {
+            font-weight: bold;
+            color: #495057;
+            margin: 0;
+            font-size: 12px;
+        }
+        
+        .segment-status-select {
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .segment-status-select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .time-input-group input {
+            flex: 1;
+            min-width: 100px;
+        }
+        
+        .time-input-group .btn {
+            white-space: nowrap;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .viewpoint-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .viewpoint-input-group input {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .viewpoint-input-group .btn {
+            white-space: nowrap;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .perspective-buttons {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .perspective-btn {
+            padding: 5px 10px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .perspective-btn:hover {
+            background: #5a6268;
+        }
+        
+        .perspective-btn.active {
+            background: #28a745;
+        }
+        
+        .perspective-btn.active:hover {
+            background: #218838;
+        }
+        
+        .auto-save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .cut-point-info {
+            border-left: 4px solid #007bff;
+        }
+        
+        .cut-point-controls {
+            border-left: 4px solid #28a745;
+        }
+        
+        .view-selection-section {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .view-buttons .view-btn {
+            padding: 5px 10px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .view-buttons .view-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        .view-buttons .view-btn.active {
+            background: #28a745;
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+        }
+        
+        .view-buttons .view-btn.active:hover {
+            background: #218838;
+        }
+        
+        .video-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .segment-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border-radius: 4px;
+            margin-bottom: 2px;
+        }
+        
+        .segment-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .segment-item.active {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+            transform: translateX(2px);
+        }
+        
+        .segment-item.error {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+        }
+        
+        .segment-item.error:hover {
+            background-color: #ffcdd2;
+        }
+        
+        .segment-item.loading {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            position: relative;
+        }
+        
+        .segment-item.loading::after {
+            content: '';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ff9800;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            100% { transform: translateY(-50%) rotate(360deg); }
+        }
+        
+        .segment-info {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .qa-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .qa-item.editing {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .qa-question {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .qa-answer {
+            margin-bottom: 8px;
+            color: #555;
+        }
+        
+        .qa-meta {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .qa-reason {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .qa-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .qa-edit-form {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 10px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        
+        .form-group textarea {
+            height: 60px;
+            resize: vertical;
+        }
+        
+        .video-player-container {
+            padding: 15px;
+        }
+        
+        .video-player {
+            width: 100%;
+            max-width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 5px;
+        }
+        
+        .video-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .time-display {
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .qa-statistics {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+        
+        .btn-sm {
+            padding: 3px 8px;
+            font-size: 11px;
+        }
+        
+        /* QA列表中的按钮 - 增大尺寸 */
+        .qa-actions .btn {
+            padding: 8px 12px;
+            font-size: 13px;
+            min-height: 32px;
+            min-width: 60px;
+        }
+        
+        /* 视频播放区域的按钮 - 增大尺寸 */
+        .video-controls .btn {
+            padding: 10px 16px;
+            font-size: 14px;
+            min-height: 36px;
+            min-width: 80px;
+        }
+        
+        /* QA编辑表单中的按钮 - 保持原有大小 */
+        .qa-edit-form .btn {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        
+        /* 切分点和视角输入区域的按钮 - 保持原有大小 */
+        .qa-cut-point-section .btn,
+        .qa-view-section .btn {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+        
+        .video-selection-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .video-selection-section h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .video-file-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .selected-video-name {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .qa-item.selected {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+            transform: translateX(2px);
+        }
+        
+        .qa-item.selected-for-use {
+            background: #e8f5e8;
+            border-left: 3px solid #28a745;
+        }
+        
+        /* 当QA既是usable又是selected时的特殊样式 */
+        .qa-item.selected.selected-for-use {
+            background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e8 100%);
+            border-left: 4px solid #1976d2;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+            transform: translateX(3px);
+        }
+        
+        /* 选中状态的动画效果 */
+        .qa-item.selected {
+            transition: all 0.3s ease;
+        }
+        
+        .cut-point-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .cut-point-section h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .cut-point-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .time-input-group label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .time-input {
+            width: 80px;
+            padding: 3px 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .cut-points-list {
+            max-height: 100px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 3px;
+            padding: 5px;
+        }
+        
+        .cut-point-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 5px;
+            margin: 2px 0;
+            background: white;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .cut-point-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .cut-point-time {
+            font-family: monospace;
+            color: #333;
+        }
+        
+        .cut-point-actions {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .btn-xs {
+            padding: 2px 6px;
+            font-size: 10px;
+        }
+        
+        .cut-point-info {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .cut-point-info .qa-title {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .segment-status-badge {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .segment-status-badge.unavailable {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .segment-status-badge.pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .segment-status-badge.observed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .filter-buttons {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .filter-buttons .btn {
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .cut-point-single {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .cut-point-single input {
+            width: 80px;
+            padding: 3px 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .cut-point-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .qa-cut-point-display {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .qa-item.selected-for-use .qa-actions .btn-warning {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .qa-item.selected-for-use .qa-actions .btn-warning:hover {
+            background: #c82333;
+        }
+        
+        .view-selection-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .view-selection-section h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .view-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .view-btn {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .view-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .view-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .qa-view-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="qa-review-container">
+        <!-- 左侧：Segment列表 -->
+        <div class="qa-left-panel">
+            <div class="video-directory-info">
+                <div class="video-info">
+                    视频源目录: static/videos/
+                </div>
+                <div class="video-info">
+                    JSON文件目录: data/
+                </div>
+                <div class="json-file-selector">
+                    <div class="data-file-selector">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <button onclick="qaApp.loadDataFiles()" style="padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                <i class="fas fa-sync"></i> 刷新
+                            </button>
+                            <button onclick="qaApp.toggleFileList()" id="toggleFileListBtn" style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                <i class="fas fa-chevron-down"></i> 展开文件列表
+                            </button>
+                            <span id="fileCount" style="font-size: 12px; color: #666;">0 个文件</span>
+                        </div>
+                        <div id="dataFileList" style="display: none; max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 3px; background: #f8f9fa;">
+                            <div style="text-align: center; color: #888; padding: 15px; font-size: 12px;">
+                                点击"刷新"加载文件列表
+                            </div>
+                        </div>
+                    </div>
+                    <div class="json-file-info" id="currentJSONFile">
+                        <small style="color:#888;">请先将JSON文件放在data文件夹中</small>
+                    </div>
+                </div>
+                <div class="perspective-buttons" id="perspectiveButtons" style="display: none;">
+                    <!-- 视角按钮将动态生成 -->
+                </div>
+            </div>
+            <div class="panel-header">
+                <i class="fas fa-list"></i>
+                Segment列表
+            </div>
+            <div class="filter-buttons">
+                <button class="btn btn-primary btn-sm" onclick="qaApp.showAllSegments()">
+                    <i class="fas fa-list"></i> 全部
+                </button>
+                <button class="btn btn-warning btn-sm" onclick="qaApp.showPendingSegments()">
+                    <i class="fas fa-eye"></i> 待观察
+                </button>
+                <button class="btn btn-success btn-sm" onclick="qaApp.showSelectedSegments()">
+                    <i class="fas fa-check"></i> 已审阅
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="qaApp.showUnavailableSegments()">
+                    <i class="fas fa-times"></i> 不可用
+                </button>
+                <small class="text-muted" style="display: block; margin-top: 5px;">
+                    <i class="fas fa-info-circle"></i> 点击下拉框可直接选择segment状态
+                </small>
+            </div>
+            <div id="segmentList">
+                <!-- Segment列表将通过JavaScript动态加载 -->
+            </div>
+        </div>
+        
+        <!-- 中间：QA列表 -->
+        <div class="qa-center-panel">
+            <div class="panel-header">
+                <i class="fas fa-question-circle"></i>
+                QA列表
+                <span id="currentSegmentInfo" style="float: right; font-size: 12px; color: #666;"></span>
+            </div>
+            <div id="qaList">
+                <!-- QA列表将通过JavaScript动态加载 -->
+            </div>
+        </div>
+        
+        <!-- 右侧：视频播放器 -->
+        <div class="qa-right-panel">
+            <div class="panel-header">
+                <i class="fas fa-video"></i>
+                视频播放器
+            </div>
+            <div class="video-player-container" style="flex: 1; display: flex; flex-direction: column;">
+                <div id="videoInfo" class="video-info" style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 12px;">
+                    <strong>视频信息:</strong> 请选择一个segment来加载视频
+                </div>
+                <video id="videoPlayer" class="video-player" controls style="flex: 1;">
+                    <source src="" type="video/mp4">
+                    您的浏览器不支持视频播放。
+                </video>
+                <div class="video-controls" style="margin-top: 10px;">
+                    <span class="time-display" id="currentTime">00:00 / 00:00</span>
+                    <button class="btn btn-success btn-sm" onclick="qaApp.playSelectedQATime()" style="margin-left: 10px;">
+                        <i class="fas fa-play"></i> 播放选中QA时间
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="qaApp.playSelectedQAFirstHalf()" style="margin-left: 5px;">
+                        <i class="fas fa-play"></i> 播放前半段
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="qaApp.playSelectedQASecondHalf()" style="margin-left: 5px;">
+                        <i class="fas fa-play"></i> 播放后半段
+                    </button>
+                </div>
+                
+                <div class="keyboard-shortcuts" style="margin-top: 10px;">
+                    <small class="text-muted">
+                        <i class="fas fa-keyboard"></i>
+                        快捷键: 空格 播放/暂停 | 回车 播放选中QA时间
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+        <div class="spinner"></div>
+        <span>加载中...</span>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/qa_app.js') }}"></script>
+    
+    <!-- 自动保存指示器 -->
+    <div id="autoSaveIndicator" class="auto-save-indicator">
+        已自动保存
+    </div>
+</body>
+</html>
